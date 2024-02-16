@@ -32,8 +32,9 @@
 
       // Only redraw the meteorites when the map change and not every frame.
       myMap.onChange(drawMeteorites);
-      //fill(191, 19, 0, 90); 
-      //stroke(100);
+          blendMode(ADD);
+          fill(191, 19, 0, 220); 
+          noStroke();
     }
 
     function draw(){
@@ -60,9 +61,6 @@
           // meteorite (https://en.wikipedia.org/wiki/Hoba_meteorite)
           let size = meteorites.getString(i, 'mass (g)');
           size = map(size, 558, 60000000, 1, 25) + myMap.zoom();
-          blendMode(ADD);
-          fill(191, 19, 0); 
-          noStroke();
           ellipse(pos.x, pos.y, size, size);
         }
       }
