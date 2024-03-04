@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+    <meta charset='utf-8' />
+    <title>Wildlife Biodiversity at UBC</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
+    <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css"
+    rel="stylesheet"/>
+
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      h3 {
+        margin: 10px;
+      }
+      
+      p {
+        margin: 10px;
+      }
+      p2 {
+        margin: 10px;
+        font-size: 10px;
+      }
+
+
+      .map-overlay {
+        position: absolute;
+        left: 0;
+        background: #ffffffb9;
+        margin-left: 20px;
+        font-family: Arial, sans-serif;
+        overflow: visible;
+        border-radius: 3px;
+        padding: 5px 10px;
+        margin: 10px;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+
+      #features {
+        top: 0;
+        margin-top: 20px;
+        }
+        
+      #legend {
+        bottom: 0;
+        padding: 10px;
+        margin-bottom: 40px;
+        width: 160px;
+        }
+        
+     .legend-key {
+        display: inline-block;
+        border-radius: 100%;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+        }
+
+ 
+    </style>
+    </head>
+    <body>
+
+    <div id="map"></div>
+    <div class="map-overlay" id="features">
+    <h3>Wildlife Seen at UBC</h3>
+    <div id="pd"><p>Click on a point for more information.</p></div>
+    </div>
+    <div class="map-overlay" id="legend"></div>
+
+    
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic3VtbWVyLWgtcyIsImEiOiJjbHN3b21reGQydmNlMmxwcHh0OWw4cTgwIn0.MpcHLXkWUYWUOBqfMlCZVw';
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/summer-h-s/cltbrxhyq00mk01rafsf2981v',
+      center: [-123.249232, 49.261305],
+      zoom: 12.58
+    });
+
+    //wait for map to load before adjusting it
+    map.on('load', () => {
+        map.getCanvas().style.cursor = 'default';
+
+        // define legend layer names
+        const layers = [
+            'Phylum Annelida',
+            'Phylum Arthropoda',
+            'Phylum Chordata',
+            'Phylum Mollusca',
+        ];
+        const colors = [
+            '#24b3eb',
+            '#4054d4',
+            '#ffa203',
+            '#e750c6',
+        ];
+
+        // create legend
+        const legend = document.getElementById('legend');
+        
+        layers.forEach((layer, i) => {
+            const color = colors[i];
+            const item = document.createElement('div');
+            const key = document.createElement('span');
+            key.className = 'legend-key';
+            key.style.backgroundColor= color;
+        
+        const value = document.createElement('span');
+            value.innerHTML = `${layer}`;
+            item.appendChild(key);
+            item.appendChild(value);
+            legend.appendChild(item);
+        });
+
+        // change info window on hover
+        map.on('click', (event) => {
+            const points = map.queryRenderedFeatures(event.point, {
+                layers: ['GBIF_wildlife_occurances']
+            });
+            document.getElementById('pd').innerHTML = points.length
+            ? `<p><b>Species: </b>${points[0].properties.species}</p>
+            <p><b>Class: </b>${points[0].properties.class}</p>
+            <p><b>Date of Sighting: </b>${points[0].properties.eventDate}</p>
+            <p><b>iNaturalist Record: </b>${points[0].properties.occurrenceID}</p>
+            <p2><em>Data Reference: GBIF.org (01 March 2024) GBIF Occurrence Download https://doi.org/10.15468/dl.q9dukc<em></p2>`
+            : `<p>Click on a point for more information.</p>`;
+        });
+
+    });
+
+
+  </script>
+    </body>
+</html>
