@@ -1,6 +1,7 @@
 # UBC Microwave Locator Map (GEOS472 Lab 2)
 
 Visit map here: https://summer-h-s.github.io/summer-h-s-web/Lab2/ubcv_microwaves_map.html
+(*You may need to refresh a few times until the microwave points show up*)
 
 Add or edit microwave data here: https://docs.google.com/spreadsheets/d/1meLUxBldPY7nR5bxVDAH_YshUEVnrjwjLYQZtJVxCR8/edit?usp=sharing
 
