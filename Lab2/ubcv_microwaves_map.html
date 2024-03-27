@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>UBC Microwave Locator</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.js"></script>
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v2.0.1/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://npmcdn.com/csv2geojson@latest/csv2geojson.js"></script>
+    <script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+
+      .map-overlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+        background: #ffffff;
+        margin-left: 20px;
+        font: 400 15px/20px "Arial", Sans-serif;
+        color: #3d3b3b;
+        overflow: visible;
+        border-radius: 5px;
+        padding: 5px 15px;
+        margin: 10px;
+        box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+      }
+
+      .map-attribution a {
+        color: rgba(0, 0, 0, 0.75);
+        text-decoration: none;
+        position: absolute;
+        right: 270px;
+        bottom: 0;
+        padding: 0 5px;
+        background-color: hsla(0, 0%, 100%, 0.5);
+        margin: 0;
+        font: 12px/20px Helvetica Neue, Arial, Helvetica, sans-serif;
+        overflow: hidden;
+      }
+      
+      .mapboxgl-popup {
+        padding: 5px 10px;
+        border-radius: 5px;
+      }
+
+      .mapboxgl-popup-close-button {
+        display: none;
+      }
+
+      .mapboxgl-popup-content {
+        font: 400 15px/20px "Arial", Sans-serif;
+        padding: 0;
+        width: 250px;
+      }
+
+      .mapboxgl-popup-content-wrapper {
+        padding: 1%;
+      }
+
+      .mapboxgl-popup-content h3 {
+        background: rgb(61, 59, 59);
+        text-align: center;
+        color: #ffffff;
+        margin: 0;
+        display: block;
+        padding: 15px;
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        font-weight: 700;
+        margin-top: -5px;
+      }
+
+      .mapboxgl-popup-content h4 {
+        margin: 1px;
+        display: block;
+        padding: 5px 10px 5px 10px;
+        font-weight: 400;
+      }
+
+      .mapboxgl-container {
+        cursor: pointer;
+      }
+
+      .mapboxgl-popup-anchor-top > .mapboxgl-popup-content {
+        margin-top: 3px;
+      }
+
+      .mapboxgl-popup-anchor-top > .mapboxgl-popup-tip {
+        border-bottom-color: rgb(61, 59, 59);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map"></div>
+    <div class="map-overlay">
+      <h2>UBC Microwave Locator</h2>
+      <div>
+        <strong>
+          Click anywhere on the map to highlight the closest microwave. Click on
+          an icon to learn more.
+        </strong>
+        <p>
+          This is a collaboraive mapping project. Learn how to add or edit points <a href="https://docs.google.com/spreadsheets/d/1meLUxBldPY7nR5bxVDAH_YshUEVnrjwjLYQZtJVxCR8/edit?usp=sharing">here.</a>
+        </p>
+
+      </div>
+    </div>
+
+    <div class="map-attribution">
+     icon by <a href="https://icons8.com">Icons8</a>
+    </div>
+
+    <script>
+      mapboxgl.accessToken =
+        "pk.eyJ1Ijoic3VtbWVyLWgtcyIsImEiOiJjbHN3b21reGQydmNlMmxwcHh0OWw4cTgwIn0.MpcHLXkWUYWUOBqfMlCZVw";
+      var map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/streets-v11",
+        center: [-123.246, 49.2606],
+        zoom: 13,
+      });
+
+      //turn live sheet into dataset.
+      //(follows the Mapbox sheetmapper tutorial)
+      $(document).ready(function () {
+        $.ajax({
+          type: "GET",
+          url: "https://docs.google.com/spreadsheets/d/1meLUxBldPY7nR5bxVDAH_YshUEVnrjwjLYQZtJVxCR8/gviz/tq?tqx=out:csv&sheet=Sheet1",
+          dataType: "text",
+          success: function (csvData) {
+            makeGeoJSON(csvData);
+          },
+        });
+
+        function makeGeoJSON(csvData) {
+          csv2geojson.csv2geojson(
+            csvData,
+            {
+              latfield: "Latitude",
+              lonfield: "Longitude",
+              delimiter: ",",
+            },
+            function (err, data) {
+              map.on("load", function () {
+                // add marker image.
+                //(follows the Mapbox 'add an icon to the map' tutorial, using an external url)
+                map.loadImage(
+                  "https://img.icons8.com/ios-filled/50/000000/microwave.png",
+                  function (error, image) {
+                    if (error) throw error;
+                    map.addImage("microwave", image);
+                  }
+                );
+
+                // add data.
+                //(adapts Mapbox 'Analyze data with Turf.js' tutorial and the code of 
+                //several other existing projects, identified using the DevTools)
+                map.addLayer({
+                  id: "csvData",
+                  type: "symbol",
+                  source: {
+                    type: "geojson",
+                    data: data,
+                  },
+                  layout: {
+                    "icon-image": "microwave",
+                    "icon-anchor": "center",
+                    "icon-allow-overlap": true,
+                    "icon-size": 0.5,
+                  },
+                });
+
+                // event listener for popups
+                map.on("click", "csvData", function (e) {
+                  var coordinates = e.features[0].geometry.coordinates.slice();
+                  // popup text
+                  var description =
+                    `<h3>` +
+                    e.features[0].properties["Number of Microwaves"] +
+                    ` Microwave (s)` +
+                    `</h3>` +
+                    `<h4>` +
+                    `<b>` +
+                    `Location: ` +
+                    `</b>` +
+                    e.features[0].properties["Building Name"] +
+                    `</h4>` +
+                    `<h4>` +
+                    `<b>` +
+                    `Description: ` +
+                    `</b>` +
+                    e.features[0].properties["Location Description"] +
+                    `<h4>` +
+                    `<b>` +
+                    `Notes: ` +
+                    `</b>` +
+                    e.features[0].properties.Notes +
+                    `</h4>` +
+                    `</h4>` +
+                    `<h4>` +
+                    `<b>` +
+                    `Building Hours: ` +
+                    `</b>` +
+                    e.features[0].properties["Building Hours"] +
+                    `</h4>` +
+                    `<h4>` +
+                    `<b>` +
+                    `Last Updated: ` +
+                    `</b>` +
+                    e.features[0].properties["Last Updated"] +
+                    `</h4>`;
+
+                  // Ensure that if the map is zoomed out such that multiple
+                  // copies of the feature are visible, the popup appears
+                  // over the copy being pointed to.
+                  while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                    coordinates[0] +=
+                      e.lngLat.lng > coordinates[0] ? 360 : -360;
+                  }
+
+                  // add Popup to map
+                  new mapboxgl.Popup()
+                    .setLngLat(coordinates)
+                    .setHTML(description)
+                    .addTo(map);
+                });
+
+                var bbox = turf.bbox(data);
+                map.fitBounds(bbox, { padding: 50 });
+              });
+            }
+          );
+        }
+      });
+
+      // Event listener for finding nearest microwave.
+      //(adapts the 'WebGIS with Turf.js and Leaflet' tutorial, plus the code of 
+      //several other existing projects, identified using the DevTools, and some help with the clickedPoint
+      // funcitonality from a lot of research and the Stackoverflow posts referenced on github)
+      map.on("click", function (e) {
+        var clickedPoint = turf.point([e.lngLat.lng, e.lngLat.lat]);
+        var microwaveFeatures = map.queryRenderedFeatures({
+          layers: ["csvData"],
+        });
+
+        var coordinates = [];
+        microwaveFeatures.forEach(function (feature) {
+          coordinates.push(turf.point(feature.geometry.coordinates));
+        });
+
+        // Find the nearest point from the microwave data
+        var nearest = turf.nearestPoint(
+          clickedPoint,
+          turf.featureCollection(coordinates)
+        );
+
+        // Remove existing circle if it exists. 
+        //(this point and after was adapted from the 'WebGIS with Turf.js and Leaflet'
+        //tutorial, so I first made my map with their commands to make a marker on the nearest feature on mouse click,
+        //then figured out how to make this a circle. The Mapbox 'Analyze data with Turf.js' tutorial moreso helped me 
+        //handle the formatting for this circle layer)
+        if (map.getLayer("nearest-circle")) {
+          map.removeLayer("nearest-circle");
+          map.removeSource("nearest-circle");
+        }
+
+        // Create a new circle
+        map.addLayer(
+          {
+            id: "nearest-circle",
+            type: "circle",
+            source: {
+              type: "geojson",
+              data: {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "Point",
+                  coordinates: nearest.geometry.coordinates,
+                },
+              },
+            },
+            paint: {
+              "circle-radius": 18,
+              "circle-color": "#FCC419",
+              //"circle-opacity": 0.5,
+            },
+          },
+          "csvData"
+        );
+      });
+    </script>
+  </body>
+</html>
