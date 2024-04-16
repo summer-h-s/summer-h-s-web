@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Time Slide Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+  </head>
+  <style>
+    body {
+      overflow: hidden;
+    }
+    body * {
+       -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    .map {
+      position: absolute; 
+      top: 0; 
+      bottom: 0; 
+      width: 100%; 
+    }
+  </style>
+  <body>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"></script>
+    <link 
+      rel="stylesheet"
+      href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css"
+      type="text/css"
+      />
+
+    <div id="map"></div>
+    <div id="console">
+      <h1>Police Incidents 1971-2023</h1>
+      <p>
+        Data: 
+        <a href="https://police-involved-deaths-ca.github.io/Data/"
+        >Police incidents across Canada from 1971 to 2023</a>
+      </p>
+      <div class="session" id="slidebar">
+        <h2>Year: <label id="active-year">move slider to select year</label></h2>
+        <input id="slider" class="row" type="range" min="1971" max="2023" step="1" value="1971" />
+      </div>
+    </div>
+    <style>
+      body {
+        margin: 0; 
+        padding: 0; 
+        font-family: "Roboto Condensed", sans-serif;
+ 
+      }
+      #map {
+        position: absolute; 
+        top: 0; 
+        bottom: 0; 
+        width: 100%; 
+      }
+      h1 {
+        font-size: 16px; 
+        line-height: 24px; 
+      }
+      h2{
+        font-size: 14px; 
+        line-height: 16px; 
+        margin-bottom: 7px; 
+      }
+      a {
+        text-decoration: none; 
+        color: #9648c6; 
+      }
+      #console {
+        position: absolute; 
+        width: 214px; 
+        margin: 7px; 
+        padding: 7px 17px; 
+        background-color: white; 
+      }
+    </style>
+    <script>
+      mapboxgl.accessToken='pk.eyJ1Ijoic3VtbWVyLWgtcyIsImEiOiJjbHN3b21reGQydmNlMmxwcHh0OWw4cTgwIn0.MpcHLXkWUYWUOBqfMlCZVw';
+      const mapMap = new mapboxgl.Map({
+        container: 'map', 
+        // choose from mapbox's core styles or make your own 
+        style: 'mapbox://styles/summer-h-s/cluhn0ez500mx01q54nofex1g',
+        center: [-104, 60], 
+        zoom: 3
+      }); 
+      mapMap.on('load', () => {
+        //add interactivity to slider
+        document.getElementById('slider').addEventListener('input', (event) => {
+          const year=event.target.value.toString();
+          console.log('current year: ['+year+']'); 
+          //update the map
+          mapMap.setFilter('police-violence-canada-dataset', ['==', ['slice', ['string', ['get', 'date']],0,4], year]);
+          // update slider title 
+          document.getElementById('active-year').innerText=year;
+        })
+      }); 
+    </script>
+  </body>
+</html>
